@@ -22,23 +22,30 @@ function setup() {
   let x = width / 2 - (bounds.x + bounds.w / 2);
   let y = height / 2 - (bounds.y + bounds.h / 2);
   //把x,y值拆開來define，彈性更大。如果想要變化array中的個別數值都可以用這樣的方法
-  points = font.textToPoints(word, x, y, fontSize, {
-    sampleFactor:0.2, //resolusion of points
-    // simplifyThreshold: 0.099, 
-    //simplifyThreshold = 0
-    // 完全不簡化
 
-    // 數值很小
-    // 只刪除幾乎完全在一直線上的點
-
-    // 數值變大
-    // 容許更大的方向差
-    // → 更多點會被刪掉
-    // → 輪廓越簡化
-  });
+  let mask = createGraphics(width, height);
+  mask.pixelDensity(1);
+  mask.clear();
+  mask.textFont(font);
+  mask.textSize(fontSize);
+  mask.noStroke();
+  mask.text(word, x, y);
+  mask.loadPixels();
+  let gap = 8;
+  for (let py = 0; py < height; py += gap){
+    for (let px = 0; px < width; px += gap){
+        let index = 4 * (px + py * width);
+        let alpha = mask.pixels[index + 3];
+        if (alpha > 100) {
+            points.push({
+                x: px,
+                y: py
+            });
+        }
+    }
+  }
   purple = color(229, 204, 255);
   lightPurple = color(248, 238, 255);
-  print(points);
   angleMode(DEGREES)
 }
 
