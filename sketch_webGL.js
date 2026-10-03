@@ -1,13 +1,16 @@
 let font;
 let mask;
+let points = [];
+
+let blobMask;
 let softMask;
+
 let jellyShader;
 
 let word = "Dorobou";
 let fontSize = 300;
 
-let purple;
-let lightPurple;
+let angle = 0;
 
 // ================================
 // Vertex Shader
@@ -48,25 +51,10 @@ uniform sampler2D uMask;
 uniform sampler2D uSoftMask;
 
 uniform vec2 uTexel;
-uniform float uTime;
 
 void main() {
 
   vec2 uv = vTexCoord;
-
-
-  // ================================
-  // 1. 整塊文字的波動
-  // ================================
-
-  float waveX =
-      sin(uv.y * 9.0 + uTime * 1.5) * 0.012
-    + sin(uv.y * 4.0 - uTime * 0.8) * 0.006;
-
-  float waveY =
-      sin(uv.x * 7.0 + uTime * 1.1) * 0.006;
-
-  uv += vec2(waveX, waveY);
 
 
   // ================================
@@ -79,11 +67,13 @@ void main() {
   float soft =
     texture2D(uSoftMask, uv).a;
 
+
+  // 用模糊後的 softMask 重新決定外輪廓
   float alpha =
     smoothstep(
-      0.05,
-      0.95,
-      maskValue
+      0.20,
+      0.45,
+      soft
     );
 
 
@@ -180,15 +170,15 @@ void main() {
 
   vec3 deepPurple =
     vec3(
-      0.46,
-      0.25,
+      0.52,
+      0.39,
       0.92
     );
 
   vec3 purple =
     vec3(
       0.68,
-      0.48,
+      0.58,
       1.0
     );
 
@@ -311,7 +301,7 @@ void main() {
     mix(
       jellyColor,
       deepPurple,
-      edge * 0.45
+      edge * 0.005
     );
 
 
@@ -349,27 +339,156 @@ function setup() {
   let x = width / 2 - (bounds.x + bounds.w / 2);
   let y = height / 2 - (bounds.y + bounds.h / 2);
   mask.text(word, x, y);
+
   // ================================
-  // 建立模糊版本
-  // shader 用它判斷「表面坡度」
+  // 把填滿的文字轉成 points
   // ================================
-  softMask = createGraphics(width, height);
+
+  mask.loadPixels();
+
+  let gap = 8;
+
+  for (let py = 0; py < height; py += gap) {
+
+    for (let px = 0; px < width; px += gap) {
+
+      let index =
+        4 * (px + py * width);
+
+      let alpha =
+        mask.pixels[index + 3];
+
+      if (alpha > 100) {
+
+        points.push({
+          x: px,
+          y: py
+        });
+
+      }
+    }
+  }
+  // ================================
+  // 建立動態 blob mask
+  // ================================
+
+  blobMask =
+    createGraphics(
+      width,
+      height
+    );
+
+  blobMask.pixelDensity(1);
+
+
+  // ================================
+  // 建立柔化版本
+  // ================================
+
+  softMask =
+    createGraphics(
+      width,
+      height
+    );
+
   softMask.pixelDensity(1);
-  softMask.clear();
-  softMask.image(mask, 0, 0);
-  softMask.filter(BLUR, 18);
   // ================================
   // 建立 shader
   // ================================
   jellyShader = createShader(vert, frag);
+  angleMode(DEGREES);
   noStroke();
 }
 function draw() {
   background(255);
+  // ================================
+  // 1. 每一幀重新建立流動中的 blob
+  // ================================
+
+  blobMask.clear();
+
+  blobMask.noStroke();
+  blobMask.fill(255);
+
+
+  for (let i = 0; i < points.length; i++) {
+
+    let p = points[i];
+
+
+    // 整塊物體左右流動
+    let x =
+      p.x +
+      3 * sin(
+        angle +
+        p.y * 0.5
+      );
+
+
+    // 比較小的上下波動
+    let y =
+      p.y +
+      3 * sin(
+        angle * 0.7 +
+        p.x * 0.35
+      );
+
+
+    // blob 自己也有一些膨脹
+    let w =
+      map(
+        sin(
+          angle +
+          p.y * 0.05
+        ),
+        -1,
+        1,
+        28,
+        46
+      );
+
+
+    let h =
+      map(
+        cos(
+          angle +
+          p.x * 0.04
+        ),
+        -1,
+        1,
+        26,
+        44
+      );
+
+
+    blobMask.ellipse(
+      x,
+      y,
+      w,
+      h
+    );
+  }
+  // ================================
+  // 2. 把 blobMask 模糊
+  // ================================
+
+  softMask.clear();
+
+  softMask.drawingContext.filter =
+    "blur(22px)";
+
+  softMask.image(
+    blobMask,
+    0,
+    0
+  );
+
+  softMask.drawingContext.filter =
+    "none";
   shader(jellyShader);
   jellyShader.setUniform(
     "uMask",
-    mask
+    blobMask
   );
   jellyShader.setUniform(
     "uSoftMask",
@@ -378,9 +497,6 @@ function draw() {
   jellyShader.setUniform(
     "uTexel",[1/width, 1/height]
   );
-  jellyShader.setUniform(
-    "uTime",
-    millis() / 1000
-  );
   rect(-width / 2, -height / 2, width, height);
+  angle += 2;
 }
