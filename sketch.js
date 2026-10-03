@@ -44,8 +44,8 @@ function setup() {
         }
     }
   }
-  purple = color(229, 204, 255);
-  lightPurple = color(248, 238, 255);
+  purple = color(215, 175, 255);
+  lightPurple = color(238, 218, 255);
   angleMode(DEGREES)
 }
 
@@ -53,26 +53,26 @@ function draw() {
   background(255, 255, 255);
   noStroke();
   for (let i = 0; i < points.length; i++){
-    let x = points[i].x + r*sin(angle + i*12);
+    let x = points[i].x  + r*sin(angle + i*12);
     let y = points[i].y;
     let w = map(sin(angle + i * 12), -1, 1, 40, 50);
     let h = map(cos(angle + i * 12),-1, 1, 20, 50);
-    let a = map(sin(angle + i * 12), -1, 1, 150, 255); 
+    let a = map(sin(angle + i * 12), -1, 1, 220, 255); 
     //map(數值, 原本最小值, 原本最大值, 新最小值, 新最大值),可以把把一個範圍轉換成另一個範圍
-    let tone = map(sin(angle), -1, 1, 0, 0.25);
+    let tone = map(sin(angle), -1, 1, 0, 0.08);
     let jellyColor = lerpColor(purple, lightPurple, tone);
     jellyColor.setAlpha(a);
     fill(jellyColor);
     ellipse(x, y, w, h);
     // 高光
-    blendMode(SCREEN);
-    let highlightColor = lerpColor(
-        jellyColor, color(255), 0.9
-    );
-    highlightColor.setAlpha(255);
-    fill(highlightColor);
-    ellipse(x - w * 0.12, y - h * 0.15, w * 0.45, h * 0.18);
-    blendMode(BLEND);
+    // blendMode(SCREEN);
+    // let highlightColor = lerpColor(
+    //     jellyColor, color(255), 0.9
+    // );
+    // highlightColor.setAlpha(255);
+    // fill(highlightColor);
+    // ellipse(x - w * 0.12, y - h * 0.15, w * 0.45, h * 0.18);
+    // blendMode(BLEND);
   }
   angle += 2;
 }
