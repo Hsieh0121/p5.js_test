@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Raindrop</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.3/p5.min.js"></script>
+  <script>
+    window.cvReady = false;
+    var Module = {
+        onRuntimeInitialized(){
+            window.cvReady = true;
+
+            console.log("openCV.js is ready");
+            console.log("openCV version:", cv.getBuildInformation().split("\n")[0]);
+        }
+    }
+  </script>
+  <script
+    async
+    src = "https://docs.opencv.org/4.13.0/opencv.js">
+  </script>
+</head>
+
+<body>
+
+  <script src="sketch.js"></script>
+
+</body>
+
+</html>
